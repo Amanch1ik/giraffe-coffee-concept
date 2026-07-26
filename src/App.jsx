@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence, MotionConfig } from 'motion/react'
 import Lenis from 'lenis'
-import { LOCATIONS, KIND, status, fmt, telHref, telText } from './locations.js'
+import { LOCATIONS, KIND, status, fmt, telHref, telText, distKm, fmtKm } from './locations.js'
+import Map from './Map.jsx'
 import { MENU, ADDONS } from './menu.js'
 import World from './World.jsx'
 
 /* Их собственная съёмка из официального PDF-меню — вырезы с альфа-каналом
    (в PDF картинка и её маска лежат отдельно, собрал обратно в RGBA).
    Поэтому блюда «летают» по кремовому фону без рамок и плашек. */
-const CUT = (n) => `/cut/${n}.webp`
+const B = import.meta.env.BASE_URL
+const CUT = (n) => `${B}cut/${n}.webp`
 
 const DISH = {
   coffee: 'latte', matcha: 'latte', breakfast: 'benedict',
@@ -39,7 +41,7 @@ function Header() {
     <header className="fixed inset-x-0 top-0 z-[100] px-4 py-3 md:px-8 md:py-4">
       <div className="card mx-auto flex w-full max-w-6xl items-center justify-between rounded-full px-5 py-2.5 shadow-sm">
         <a href="#top" className="flex items-center gap-2.5" aria-label="Giraffe Coffee">
-          <img src="/brand/logo-mark.webp" alt="" width="476" height="512" className="h-7 w-auto md:h-8" />
+          <img src={`${B}brand/logo-mark.webp`} alt="" width="476" height="512" className="h-7 w-auto md:h-8" />
           <span className="display text-lg md:text-xl">Giraffe</span>
         </a>
         <nav className="hidden items-center gap-7 text-sm text-[color:var(--muted)] md:flex">
@@ -113,10 +115,12 @@ function Hero({ now, openCount }) {
 }
 
 /* ── Карточка точки ─────────────────────────────────────────────────────── */
-function Point({ loc, now }) {
+function Point({ loc, now, km, onFocus }) {
   const st = status(loc, now)
   return (
     <motion.li layout
+      onClick={() => loc.ll && onFocus(loc.ll)}
+      style={loc.ll ? { cursor: 'pointer' } : undefined}
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .97 }}
       transition={{ type: 'spring', stiffness: 320, damping: 32 }}
       className="card flex flex-col gap-3 p-5">
@@ -125,10 +129,15 @@ function Point({ loc, now }) {
           <h3 className="tag text-[13px]">{loc.name}</h3>
           <p className="mt-1 text-sm leading-snug text-[color:var(--muted)]">{loc.addr}</p>
         </div>
-        {loc.tag && (
-          <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white"
-            style={{ background: 'var(--orange)' }}>{loc.tag}</span>
-        )}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {loc.tag && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white"
+              style={{ background: 'var(--orange)' }}>{loc.tag}</span>
+          )}
+          {km != null && (
+            <span className="tabular-nums text-xs font-semibold" style={{ color: 'var(--orange)' }}>{fmtKm(km)}</span>
+          )}
+        </div>
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-sm">
@@ -161,18 +170,42 @@ function Points({ now }) {
   const [kind, setKind] = useState('all')
   const [q, setQ] = useState('')
   const [onlyOpen, setOnlyOpen] = useState(false)
+  const [me, setMe] = useState(null)          // [lat, lon] пользователя
+  const [geoState, setGeoState] = useState('idle')
+  const [focus, setFocus] = useState(null)    // куда навести карту
 
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return LOCATIONS.filter((l) => {
+    const res = LOCATIONS.filter((l) => {
       if (kind !== 'all' && l.kind !== kind) return false
       if (onlyOpen && !status(l, now).open) return false
       if (!needle) return true
       return `${l.name} ${l.addr} ${l.city}`.toLowerCase().includes(needle)
     })
-  }, [kind, q, onlyOpen, now])
+    if (!me) return res
+    // С геопозицией сортируем по расстоянию; точки без координат — в конец.
+    return [...res].sort((a, b) => {
+      const da = a.ll ? distKm(me, a.ll) : Infinity
+      const db = b.ll ? distKm(me, b.ll) : Infinity
+      return da - db
+    })
+  }, [kind, q, onlyOpen, now, me])
+
+  const locate = () => {
+    if (!navigator.geolocation) { setGeoState('unsupported'); return }
+    setGeoState('asking')
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const ll = [p.coords.latitude, p.coords.longitude]
+        setMe(ll); setFocus(ll); setGeoState('ok')
+      },
+      () => setGeoState('denied'),
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }
 
   const chips = [{ id: 'all', ru: 'Все' }, ...Object.values(KIND)]
+  const nearest = me ? list.find((l) => l.ll) : null
 
   return (
     <section id="points" className="relative mx-auto w-full max-w-6xl px-5 py-20 md:px-8 md:py-28">
@@ -218,16 +251,40 @@ function Points({ now }) {
             <i className="dot" style={{ background: onlyOpen ? '#fff' : '#1c9e5a' }} />
             Открыто сейчас
           </button>
+
+          {/* Геолокация: сортирует список по расстоянию и ставит метку на карту */}
+          <button onClick={locate} disabled={geoState === 'asking'}
+            className="btn btn-primary rounded-full px-4 py-2 text-[11px] disabled:opacity-60">
+            {geoState === 'asking' ? 'Определяю…' : me ? 'Обновить место' : 'Рядом со мной'}
+          </button>
         </div>
 
         <p className="text-sm text-[color:var(--muted)]">
           Найдено: <b className="tabular-nums text-[color:var(--ink)]">{list.length}</b>
+          {nearest && (
+            <> · ближайшая — <b className="text-[color:var(--ink)]">{nearest.name}</b>,{' '}
+              <b className="tabular-nums" style={{ color: 'var(--orange)' }}>{fmtKm(distKm(me, nearest.ll))}</b>{' '}
+              по прямой</>
+          )}
+          {geoState === 'denied' && <> · доступ к геопозиции закрыт</>}
+        </p>
+      </div>
+
+      {/* Карта. 7 точек без координат (адреса вроде «проход между 8-9 рядами»
+          на Дордое не геокодируются) остаются в списке, но не на карте. */}
+      <div className="mt-8">
+        <Map points={list} now={now} me={me} focus={focus} />
+        <p className="mt-2 text-center text-xs text-[color:var(--muted)]">
+          На карте {list.filter((l) => l.ll).length} из {list.length} — у остальных адрес без точной привязки.
         </p>
       </div>
 
       <motion.ul layout className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout" initial={false}>
-          {list.map((l) => <Point key={l.id} loc={l} now={now} />)}
+          {list.map((l) => (
+            <Point key={l.id} loc={l} now={now} onFocus={setFocus}
+              km={me && l.ll ? distKm(me, l.ll) : null} />
+          ))}
         </AnimatePresence>
       </motion.ul>
 
@@ -424,7 +481,7 @@ function Footer() {
       <div className="mx-auto w-full max-w-6xl">
         <div className="grid gap-10 md:grid-cols-3">
           <div>
-            <img src="/brand/logo-full.webp" alt="Giraffe Coffee" width="501" height="640" className="h-20 w-auto" />
+            <img src={`${B}brand/logo-full.webp`} alt="Giraffe Coffee" width="501" height="640" className="h-20 w-auto" />
             <p className="mt-3 max-w-xs text-sm text-[color:var(--muted)]">
               Ар дайым бийиктикте — всегда на высоте.
             </p>
@@ -449,7 +506,7 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t pt-6 text-xs leading-relaxed text-[color:var(--muted)]" style={{ borderColor: 'var(--line)' }}>
+        <div id="legal" className="mt-12 border-t pt-6 text-xs leading-relaxed text-[color:var(--muted)]" style={{ borderColor: 'var(--line)' }}>
           <p>
             <b>Концепт, не официальный сайт.</b> У сети Giraffe Coffee своего сайта нет;
             адреса, графики, телефоны и цены взяты из их публичных источников
