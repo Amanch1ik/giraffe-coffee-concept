@@ -1,0 +1,83 @@
+/* Шрифты ПЕРВЫМИ — поздний @import невалиден и оптимизатор его выкинет. */
+@import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800;900&family=Onest:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/* ── Арт-дирекшн: «Всегда на высоте» ──────────────────────────────────────
+   Палитра снята с их собственного меню: кремовая бумага, чёрный текст,
+   оранжевые плашки заголовков, светло-серый паттерн жирафьих пятен.
+   Ничего не выдумано — это их айдентика, перенесённая в веб.              */
+:root {
+  --bg:      #f7f4ef;
+  --surface: #ffffff;
+  --line:    #e6ded2;
+  --ink:     #16130f;
+  --muted:   #7c736a;
+  --orange:  #f0611f;
+  --spot:    #dfd8cd;
+}
+
+/* ВНИМАНИЕ: не сбрасывать margin через неслоёный `*` — утилиты Tailwind
+   лежат в @layer utilities, и такой сброс молча ломает `mx-auto`.
+   Reset уже делает preflight в @layer base. */
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Onest", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--orange); color: #fff; }
+
+.display { font-family: "Unbounded", sans-serif; font-weight: 900; line-height: .92; letter-spacing: -.03em; }
+.eyebrow {
+  font-family: "Unbounded", sans-serif; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .26em; font-size: .68rem;
+}
+.tag {
+  font-family: "Unbounded", sans-serif; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+}
+
+/* Плашка-заголовок как в их печатном меню */
+.plate {
+  display: inline-block; background: var(--orange); color: #fff;
+  padding: .3em .7em; border-radius: .35rem;
+}
+
+/* ── Паттерн жирафьих пятен ───────────────────────────────────────────────
+   Их фирменная подложка. Неправильные скруглённые ячейки, крупный шаг,
+   очень низкий контраст — работает как фактура бумаги, а не как картинка. */
+.spots {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cg fill='%23f1ebe1'%3E%3Cpath d='M18 30Q20 14 40 12L84 8Q100 10 102 26L106 66Q104 84 86 86L38 90Q20 88 18 70Z'/%3E%3Cpath d='M124 10Q140 4 158 8L196 16Q212 22 208 40L200 74Q194 90 176 88L136 82Q120 78 122 60Z'/%3E%3Cpath d='M230 14Q248 6 266 12L288 22Q300 30 296 46L290 76Q284 92 266 90L240 84Q224 78 226 60Z'/%3E%3Cpath d='M12 108Q16 96 32 96L74 100Q92 104 90 122L86 168Q82 186 64 184L24 178Q8 172 10 154Z'/%3E%3Cpath d='M112 102Q130 94 148 98L192 108Q210 116 204 134L194 176Q186 194 168 190L126 180Q108 174 108 156Z'/%3E%3Cpath d='M226 104Q244 96 262 102L292 114Q302 124 298 140L290 174Q282 190 264 186L238 178Q222 170 222 152Z'/%3E%3Cpath d='M16 202Q22 192 38 194L82 202Q98 208 94 226L88 268Q82 288 64 286L26 278Q10 270 12 252Z'/%3E%3Cpath d='M118 200Q136 192 154 198L196 210Q212 218 206 236L196 272Q188 290 170 286L132 276Q116 268 114 250Z'/%3E%3Cpath d='M232 198Q250 190 268 196L294 208Q304 218 300 234L292 268Q284 288 266 284L242 276Q226 268 226 250Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 300px 300px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+}
+
+.btn {
+  font-family: "Unbounded", sans-serif; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), filter .2s ease, background .2s ease, color .2s ease;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn-primary { background: var(--orange); color: #fff; }
+.btn-ghost   { border: 1.5px solid var(--ink); color: var(--ink); }
+.btn-ghost:hover { background: var(--ink); color: var(--bg); }
+
+/* Статус точки */
+.dot { width: .5rem; height: .5rem; border-radius: 999px; flex: none; }
+.dot-on  { background: #1c9e5a; box-shadow: 0 0 0 3px color-mix(in oklab, #1c9e5a 20%, transparent); }
+.dot-off { background: #b9b1a6; }
+
+input[type="search"]::-webkit-search-cancel-button { appearance: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
