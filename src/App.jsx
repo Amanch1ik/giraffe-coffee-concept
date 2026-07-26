@@ -14,7 +14,9 @@ const CUT = (n) => `${B}cut/${n}.webp`
 
 const DISH = {
   coffee: 'latte', matcha: 'latte', breakfast: 'benedict',
-  burger: 'burger', sandwich: 'croissant', dessert: 'dessert',
+  salad: 'salad', bowl: 'bowl', soup: 'soup', main: 'steak', pasta: 'pasta',
+  burger: 'burger', sandwich: 'croissant', bakery: 'bakery', dessert: 'dessert',
+  // у бара своего кадра в меню нет — категория идёт без фото
 }
 
 /* Витрина: плитки категорий с их же съёмкой. Подписи — только названия
@@ -378,9 +380,12 @@ function Menu({ cat, setCat }) {
             {/* Фото блюда меняется вместе с категорией. Смена — через CSS-переход
                 по key, без анимации прозрачности на входе: снимок обязан быть
                 виден сразу. */}
-            {/* Вырез с альфой — без рамки и круга, блюдо лежит прямо на фоне. */}
-            <img key={pic} src={CUT(pic)} alt="" width="720" height="720"
-              className="mx-auto w-full max-w-[300px] drop-shadow-[0_26px_34px_rgba(80,55,30,.2)]" />
+            {/* Вырез с альфой — без рамки и круга, блюдо лежит прямо на фоне.
+                У части категорий своего кадра в меню нет — тогда просто без фото. */}
+            {pic && (
+              <img key={pic} src={CUT(pic)} alt="" width="720" height="720"
+                className="mx-auto w-full max-w-[300px] drop-shadow-[0_26px_34px_rgba(80,55,30,.2)]" />
+            )}
 
             <div className="card p-6">
               <div className="tag text-[12px]">Добавки</div>
