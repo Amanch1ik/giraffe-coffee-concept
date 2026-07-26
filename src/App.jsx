@@ -6,10 +6,12 @@ import { MENU, ADDONS } from './menu.js'
 
 /* Их собственная съёмка, вырезанная из официального PDF-меню сети. */
 const DISH = {
-  omlet: '/dish/omlet.jpg',
-  kasha: '/dish/kasha.jpg',
-  traifl: '/dish/traifl.jpg',
-  hummus: '/dish/hummus.jpg',
+  coffee: '/dish/kasha.jpg',
+  matcha: '/dish/hummus.jpg',
+  breakfast: '/dish/omlet.jpg',
+  burger: '/dish/burger.jpg',
+  sandwich: '/dish/croissant.jpg',
+  dessert: '/dish/traifl.jpg',
 }
 
 /* ── Живые часы: раз в 30 сек, чтобы статусы точек не врали ─────────────── */
@@ -73,9 +75,11 @@ function Hero({ now, openCount }) {
           </span>
         </div>
 
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <a href="#points" className="btn btn-primary rounded-full px-7 py-3.5 text-xs">Где ближайшая</a>
-          <a href="#menu" className="btn btn-ghost rounded-full px-7 py-3.5 text-xs">Смотреть меню</a>
+        {/* На узком экране кнопки встают в столбик — фиксируем общую ширину,
+            иначе они разъезжаются по длине надписи. */}
+        <div className="mt-9 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:justify-center">
+          <a href="#points" className="btn btn-primary w-full rounded-full px-7 py-3.5 text-center text-xs sm:w-auto">Где ближайшая</a>
+          <a href="#menu" className="btn btn-ghost w-full rounded-full px-7 py-3.5 text-center text-xs sm:w-auto">Смотреть меню</a>
         </div>
 
         <ul className="mt-14 grid w-full max-w-3xl grid-cols-3 gap-4">
@@ -227,7 +231,7 @@ function Points({ now }) {
 function Menu() {
   const [cat, setCat] = useState(MENU[0].id)
   const active = MENU.find((c) => c.id === cat)
-  const pic = { coffee: DISH.kasha, matcha: DISH.hummus, breakfast: DISH.omlet, dessert: DISH.traifl }[cat]
+  const pic = DISH[cat]
 
   return (
     <section id="menu" className="spots relative border-y py-20 md:py-28" style={{ borderColor: 'var(--line)' }}>
@@ -242,12 +246,13 @@ function Menu() {
           </p>
         </div>
 
-        <div className="mt-9 flex flex-wrap justify-center gap-2">
+        {/* На мобиле категории едут горизонтально, а не рвутся на две строки. */}
+        <div className="mt-9 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
           {MENU.map((c) => {
             const on = cat === c.id
             return (
               <button key={c.id} onClick={() => setCat(c.id)}
-                className="relative rounded-full px-5 py-2.5 text-xs font-semibold transition-colors"
+                className="relative shrink-0 rounded-full px-5 py-2.5 text-xs font-semibold transition-colors"
                 style={{ color: on ? '#fff' : 'var(--muted)' }}>
                 {on && (
                   <motion.span layoutId="catPill" className="absolute inset-0 z-0 rounded-full"
@@ -274,8 +279,10 @@ function Menu() {
                 initial={{ y: 8 }} animate={{ y: 0 }}
                 transition={{ duration: .22 }}
                 className="divide-y" style={{ borderColor: 'var(--line)' }}>
+                {/* На мобиле цена уходит под название: в две колонки текст
+                    рвётся на 3-4 строки при полупустой колонке цены. */}
                 {active.items.map((it) => (
-                  <li key={it.ru} className="flex items-start justify-between gap-5 px-6 py-4">
+                  <li key={it.ru} className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5 sm:px-6">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">{it.ru}</span>
