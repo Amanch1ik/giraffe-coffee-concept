@@ -61,6 +61,68 @@ body {
 /* Шапка фиксированная — якоря должны останавливаться под ней, а не за ней. */
 section[id] { scroll-margin-top: 84px; }
 
+/* ── Глава-пролёт «От зерна до чашки» ─────────────────────────────────────
+   Кино-часть намеренно тёмная и full-bleed, страница вокруг остаётся
+   кремовой. Токены задаём вне @layer — неслоёные правила выигрывают
+   у дефолтов движка. */
+.sw-host {
+  --sw-bg: #17120e;
+  --sw-ink: #fdfaf5;
+  --sw-ink-soft: #c3b6a7;
+  --sw-accent: var(--orange);
+  --sw-font-display: "Unbounded", sans-serif;
+  --sw-font-body: "Onest", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Шапку движка не показываем — у сайта своя, поверх главы. */
+.sw-host .sw-topbar { display: none; }
+
+/* Движок нарисован под светлую тему: primary-кнопка красится в --sw-ink,
+   а лейбл маршрута — тем же --sw-ink по белой плашке. В тёмной главе
+   это выходит «белым по белому». Возвращаем контраст. */
+.sw-host .sw-btn--primary { background: var(--orange); color: #fff; }
+.sw-host .sw-btn--ghost { border-color: color-mix(in srgb, var(--sw-ink) 45%, transparent); }
+.sw-host .sw-route__label { color: #16130f; background: color-mix(in srgb, #fff 92%, transparent); }
+
+/* Текст-колонка прижата влево по дизайну движка. На широких экранах
+   выравниваем её по центрированной колонке, чтобы не улетала в край. */
+.sw-host .sw-copy { left: max(clamp(18px, 5vw, 64px), calc(50vw - 700px)); }
+
+/* Все слои движка — position:fixed. Глава стоит в середине страницы,
+   поэтому её аппарат гасим и до, и после (иначе накроет герой и меню). */
+.sw-host .sw-sky,
+.sw-host .sw-stage,
+.sw-host .sw-copylayer,
+.sw-host .sw-route,
+.sw-host .sw-scrollbar,
+.sw-host .sw-topbar { opacity: var(--sw-exit, 0); }
+
+.sw-host.is-hidden .sw-sky,
+.sw-host.is-hidden .sw-stage,
+.sw-host.is-hidden .sw-copylayer,
+.sw-host.is-hidden .sw-route,
+.sw-host.is-hidden .sw-hint,
+.sw-host.is-hidden .sw-scrollbar,
+.sw-host.is-hidden .sw-topbar { visibility: hidden; }
+
+/* Мобильный монтаж: футажи горизонтальные, экран телефона 0.46 —
+   full-bleed cover выбрасывал бы ~74% ширины кадра. Даём кино-полосу
+   сверху и копию под ней, кадр остаётся кадром. */
+@media (max-width: 860px) {
+  .sw-host .sw-scene { inset: 0 0 auto 0; height: 36vh; }
+  .sw-host .sw-scene__video,
+  .sw-host .sw-scene__still { object-position: center 50%; }
+  .sw-host .sw-copy {
+    top: 38vh; height: 54vh; width: auto; left: 20px; right: 20px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .sw-host .sw-copylayer::before { display: none; }
+  .sw-host .sw-hint { display: none; }
+  .sw-host .sw-sky__glow, .sw-host .sw-particles { display: none; }
+  .sw-host .sw-copy__title { font-size: clamp(1.9rem, 8.5vw, 2.6rem); }
+  .sw-host .sw-copy__body { font-size: .95rem; }
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--line);

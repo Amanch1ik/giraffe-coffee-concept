@@ -3,6 +3,7 @@ import { motion, AnimatePresence, MotionConfig } from 'motion/react'
 import Lenis from 'lenis'
 import { LOCATIONS, KIND, status, fmt, telHref, telText } from './locations.js'
 import { MENU, ADDONS } from './menu.js'
+import World from './World.jsx'
 
 /* Их собственная съёмка из официального PDF-меню — вырезы с альфа-каналом
    (в PDF картинка и её маска лежат отдельно, собрал обратно в RGBA).
@@ -37,11 +38,13 @@ function Header() {
   return (
     <header className="fixed inset-x-0 top-0 z-[100] px-4 py-3 md:px-8 md:py-4">
       <div className="card mx-auto flex w-full max-w-6xl items-center justify-between rounded-full px-5 py-2.5 shadow-sm">
-        <a href="#top" className="display text-lg md:text-xl">
-          Giraffe<span style={{ color: 'var(--orange)' }}>.</span>
+        <a href="#top" className="flex items-center gap-2.5" aria-label="Giraffe Coffee">
+          <img src="/brand/logo-mark.webp" alt="" width="476" height="512" className="h-7 w-auto md:h-8" />
+          <span className="display text-lg md:text-xl">Giraffe</span>
         </a>
         <nav className="hidden items-center gap-7 text-sm text-[color:var(--muted)] md:flex">
           <a href="#points" className="transition-colors hover:text-[color:var(--ink)]">Точки</a>
+          <a href="#story" className="transition-colors hover:text-[color:var(--ink)]">Как варим</a>
           <a href="#menu" className="transition-colors hover:text-[color:var(--ink)]">Меню</a>
           <a href="#reach" className="transition-colors hover:text-[color:var(--ink)]">География</a>
         </nav>
@@ -421,7 +424,7 @@ function Footer() {
       <div className="mx-auto w-full max-w-6xl">
         <div className="grid gap-10 md:grid-cols-3">
           <div>
-            <div className="display text-2xl">Giraffe<span style={{ color: 'var(--orange)' }}>.</span></div>
+            <img src="/brand/logo-full.webp" alt="Giraffe Coffee" width="501" height="640" className="h-20 w-auto" />
             <p className="mt-3 max-w-xs text-sm text-[color:var(--muted)]">
               Ар дайым бийиктикте — всегда на высоте.
             </p>
@@ -493,6 +496,7 @@ export default function App() {
         <Hero now={now} openCount={openCount} />
         <Showcase onPick={pickCategory} />
         <Points now={now} />
+        <World />
         <Menu cat={cat} setCat={setCat} />
         <Reach />
       </main>
