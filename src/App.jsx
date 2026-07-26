@@ -4,15 +4,21 @@ import Lenis from 'lenis'
 import { LOCATIONS, KIND, status, fmt, telHref, telText } from './locations.js'
 import { MENU, ADDONS } from './menu.js'
 
-/* Их собственная съёмка, вырезанная из официального PDF-меню сети. */
+/* Их собственная съёмка из официального PDF-меню — вырезы с альфа-каналом
+   (в PDF картинка и её маска лежат отдельно, собрал обратно в RGBA).
+   Поэтому блюда «летают» по кремовому фону без рамок и плашек. */
+const CUT = (n) => `/cut/${n}.webp`
+
 const DISH = {
-  coffee: '/dish/kasha.jpg',
-  matcha: '/dish/hummus.jpg',
-  breakfast: '/dish/omlet.jpg',
-  burger: '/dish/burger.jpg',
-  sandwich: '/dish/croissant.jpg',
-  dessert: '/dish/traifl.jpg',
+  coffee: 'latte', matcha: 'latte', breakfast: 'benedict',
+  burger: 'burger', sandwich: 'croissant', dessert: 'dessert',
 }
+
+/* Витрина: плитки категорий с их же съёмкой. Подписи — только названия
+   категорий и минимальная цена, посчитанная по данным меню. Конкретные
+   блюда не подписываю: сверить каждый кадр с позицией по PDF я не могу,
+   а врать в подписи к чужому фото нельзя. */
+const SHOWCASE = ['coffee', 'breakfast', 'burger', 'sandwich', 'dessert']
 
 /* ── Живые часы: раз в 30 сек, чтобы статусы точек не врали ─────────────── */
 function useNow() {
@@ -63,10 +69,14 @@ function Hero({ now, openCount }) {
           до альплагеря Ала-Арча и аэропорта «Манас».
         </p>
 
+        {/* Их собственный кадр без фона — держит центр композиции. */}
+        <img src={CUT('latte')} alt="Капучино Giraffe Coffee" width="720" height="720"
+          className="mt-4 w-[clamp(170px,26vw,240px)] drop-shadow-[0_22px_32px_rgba(80,55,30,.18)]" />
+
         {/* Живой статус сети — то, чего нет ни в инстаграме, ни в taplink.
             Намеренно без анимации входа: это ключевая информация страницы,
             она не должна зависеть от того, доиграл ли твин. */}
-        <div className="card mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-6 py-3.5 text-sm">
+        <div className="card mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-6 py-3.5 text-sm">
           <span className="tabular-nums text-[color:var(--muted)]">Сейчас {clock(now)}</span>
           <span className="flex items-center gap-2">
             <i className="dot dot-on" />
@@ -82,7 +92,7 @@ function Hero({ now, openCount }) {
           <a href="#menu" className="btn btn-ghost w-full rounded-full px-7 py-3.5 text-center text-xs sm:w-auto">Смотреть меню</a>
         </div>
 
-        <ul className="mt-14 grid w-full max-w-3xl grid-cols-3 gap-4">
+        <ul className="mt-10 grid w-full max-w-3xl grid-cols-3 gap-4">
           {[
             { n: LOCATIONS.length, l: 'точки' },
             { n: 7, l: 'городов и сёл' },
@@ -228,8 +238,7 @@ function Points({ now }) {
 }
 
 /* ── Меню ───────────────────────────────────────────────────────────────── */
-function Menu() {
-  const [cat, setCat] = useState(MENU[0].id)
+function Menu({ cat, setCat }) {
   const active = MENU.find((c) => c.id === cat)
   const pic = DISH[cat]
 
@@ -309,13 +318,9 @@ function Menu() {
             {/* Фото блюда меняется вместе с категорией. Смена — через CSS-переход
                 по key, без анимации прозрачности на входе: снимок обязан быть
                 виден сразу. */}
-            {/* Небольшой зум внутрь круга: в исходных кадрах меню по краям идут
-                гнутые подписи, маска их срезает. */}
-            <div className="aspect-square w-full overflow-hidden rounded-full"
-              style={{ boxShadow: '0 30px 60px -35px rgba(60,40,20,.55)' }}>
-              <img key={pic} src={pic} alt=""
-                className="h-full w-full scale-115 object-cover" />
-            </div>
+            {/* Вырез с альфой — без рамки и круга, блюдо лежит прямо на фоне. */}
+            <img key={pic} src={CUT(pic)} alt="" width="720" height="720"
+              className="mx-auto w-full max-w-[300px] drop-shadow-[0_26px_34px_rgba(80,55,30,.2)]" />
 
             <div className="card p-6">
               <div className="tag text-[12px]">Добавки</div>
@@ -333,6 +338,31 @@ function Menu() {
           </div>
         </div>
       </div>
+    </section>
+  )
+}
+
+/* ── Витрина: визуальный вход в меню ────────────────────────────────────── */
+function Showcase({ onPick }) {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-5 pb-4 md:px-8">
+      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        {SHOWCASE.map((id) => {
+          const c = MENU.find((m) => m.id === id)
+          const from = Math.min(...c.items.flatMap((i) => i.p))
+          return (
+            <li key={id}>
+              <button onClick={() => onPick(id)}
+                className="group flex w-full flex-col items-center rounded-2xl px-2 py-4 text-center transition-colors hover:bg-white">
+                <img src={CUT(DISH[id])} alt="" width="720" height="720" loading="lazy"
+                  className="h-28 w-auto object-contain drop-shadow-[0_16px_20px_rgba(80,55,30,.16)] transition-transform duration-300 group-hover:-translate-y-1.5 md:h-32" />
+                <span className="tag mt-3 text-[11px]">{c.ru}</span>
+                <span className="mt-1 text-xs text-[color:var(--muted)]">от {from} с</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
     </section>
   )
 }
@@ -433,6 +463,13 @@ function Footer() {
 export default function App() {
   const now = useNow()
   const openCount = useMemo(() => LOCATIONS.filter((l) => status(l, now).open).length, [now])
+  const [cat, setCat] = useState(MENU[0].id)
+
+  /* Клик по витрине переключает категорию и уводит в меню. */
+  const pickCategory = (id) => {
+    setCat(id)
+    document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -454,8 +491,9 @@ export default function App() {
       <Header />
       <main>
         <Hero now={now} openCount={openCount} />
+        <Showcase onPick={pickCategory} />
         <Points now={now} />
-        <Menu />
+        <Menu cat={cat} setCat={setCat} />
         <Reach />
       </main>
       <Footer />
