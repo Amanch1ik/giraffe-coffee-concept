@@ -549,6 +549,12 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <Header />
+      {/* Живая демо-ссылка не должна сойти за официальный сайт сети. */}
+      <a href="#legal"
+        className="fixed bottom-4 left-4 z-[110] rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase"
+        style={{ background: 'var(--ink)', color: 'var(--bg)', letterSpacing: '.12em' }}>
+        Концепт · не офсайт
+      </a>
       <main>
         <Hero now={now} openCount={openCount} />
         <Showcase onPick={pickCategory} />
