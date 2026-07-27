@@ -278,6 +278,11 @@ function Points({ now }) {
         <Map points={list} now={now} me={me} focus={focus} />
         <p className="mt-2 text-center text-xs text-[color:var(--muted)]">
           На карте {list.filter((l) => l.ll).length} из {list.length} — у остальных адрес без точной привязки.
+          {' · '}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer"
+            className="underline decoration-dotted underline-offset-2 hover:text-[color:var(--ink)]">
+            © OpenStreetMap
+          </a>
         </p>
       </div>
 

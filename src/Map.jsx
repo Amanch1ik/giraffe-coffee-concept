@@ -34,12 +34,13 @@ export default function Map({ points, now, me, focus }) {
 
   useEffect(() => {
     if (map.current || !el.current) return
-    map.current = L.map(el.current, { scrollWheelZoom: false, attributionControl: true })
+    /* Плашку атрибуции поверх карты выключаем — она перекрывает угол и ломает
+       вид. Саму атрибуцию OSM не убираем (обязательна по ODbL), а выносим
+       строкой под картой: требование лицензии соблюдено, угол чистый. */
+    map.current = L.map(el.current, { scrollWheelZoom: false, attributionControl: false })
       .setView([42.8746, 74.6122], 12)   // Бишкек
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '© OpenStreetMap',
-    }).addTo(map.current)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 })
+      .addTo(map.current)
     layer.current = L.layerGroup().addTo(map.current)
     return () => { map.current?.remove(); map.current = null }
   }, [])
